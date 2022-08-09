@@ -1,11 +1,6 @@
 import cv2
 import numpy as np
 import os
-from random import randint
-
-import shutil
-
-
 
 
 #bounding box yolo format to voc format
@@ -27,10 +22,6 @@ def yolo2voc(bboxes, image_height, image_width):
     return bboxes
 
 
-# def get_image_folder(file):
-#     l = int(len(os.listdir(file)) / 2)
-#     for i in range(l):
-#         image_folder=os.path.join(file,str(i)+'.png')
 
 
 # give path of cvat result,contain png and txt files
@@ -70,11 +61,12 @@ def showGT(file):
             bbox_list.append([data[1+i*5],data[2+i*5],data[3+i*5],data[4+i*5]])
 
         bbox_list=np.array(bbox_list)
-        #
+        #load frame
         img_path=os.path.join(file,imglist[j])
         image=cv2.imread(img_path)
-        # print(image.shape)
+        # create a list: for different class give different colors
         colors=[[255,255,255],[0,255,0],[255,0,0],[0,0,255],[255,255,0],[0,255,255],[255,0,255],[0,0,0],[100,40,50]]
+        #draw bounding box in each frame
         for i in range(object_num):
             # colors=[i*20,i*30,i*5]
             a=bbox_list[i]
@@ -88,11 +80,6 @@ def showGT(file):
         cv2.waitKey(10) & 0xFF
     cv2.destroyAllWindows()
 
-# GT_folder=os.path.join('assets/breakfest1')
-# image_folder='/home/zzh/hand_object_detector/images'
-# showGT(GT_folder,image_folder)
 
-
-# def split_file(file,image_folder,GT_folder):
 file='/home/zhihao/yolo-training/assets/breakfest1'
 showGT(file)
