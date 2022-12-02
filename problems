@@ -4,3 +4,4 @@
   如何去定位每一个接触阶段
   光流与tracker合起来能解决全过程，但是什么时候选择光流，什么时候选择tracker，判断条件是什么
   
+https://pytorch123.com/SecondSection/autograd_automatic_differentiation/
