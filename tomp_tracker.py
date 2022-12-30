@@ -1,0 +1,229 @@
+import os
+import sys
+import argparse
+import tkinter
+
+import cv2
+import numpy as np
+
+env_path = os.path.join(os.path.dirname(__file__), '..')
+if env_path not in sys.path:
+    sys.path.append(env_path)
+
+from pytracking.evaluation import Tracker
+
+
+def InputLabel(box_num):
+    label_list = []
+    box_num = box_num
+
+    def GetLabel():
+        nonlocal label_list, box_num
+
+        try:
+            label_list = var_input.get().strip()
+            label_list = list(label_list.split(','))
+            if len(label_list) == box_num:
+                # for label in label_list:
+                #     # str(label.split('_')[0])
+                #     # int(label.split('_')[1])
+                print('Label input successful')
+                root.destroy()
+            else:
+                var_input.set('The number of labels and drawn boxes must be identical')
+        except:
+            var_input.set('Input failed, labels should be defined like above')
+
+    root = tkinter.Tk(className='Specify labels')
+    root.geometry('600x120')
+
+    show_text = tkinter.Label(root, text="Specify labels of bounding boxes like: cup, bowl, milk")
+    show_text.pack(pady=20)
+
+    var_input = tkinter.StringVar()
+    label_entry = tkinter.Entry(root, textvariable=var_input, width=45)
+    label_entry.pack(side='left', expand=True)
+
+    input_button = tkinter.Button(root, text='Input', command=GetLabel)
+    input_button.pack(side='left', expand=True, ipadx=20)
+
+    root.mainloop()
+    return label_list
+
+def yolo2voc(bboxes, image_height, image_width):
+    """
+    yolo => [xmid, ymid, w, h] (normalized)
+    voc  => [x1, y1, x2, y2]
+    """
+    # bboxes = bboxes.copy().astype(float)  # otherwise all value will be 0 as voc_pascal dtype is np.int
+
+    w = bboxes[2] * image_width
+    h = bboxes[3] * image_height
+
+    x_min=bboxes[0]*image_width-w/2
+    y_min=bboxes[1]*image_height-h/2
+
+    bboxes=[x_min,y_min,x_min+w,y_min+h]
+
+    return np.array(bboxes)
+
+
+def load_groundtruth(GT_dir,image_size,box_num,bbox_final_keys):
+    width = image_size[0]
+    height = image_size[1]
+
+    GT_list = os.listdir(GT_dir)
+    GT_list.sort(key=lambda x: int(x[6:-4]))
+    image_num = len(GT_list)
+
+    GT_bboxes=np.zeros([box_num,4,image_num])
+
+    for image_idx in range(image_num):
+        GT_path = os.path.join(GT_dir, GT_list[image_idx])
+        with open(GT_path, 'r') as f:
+            data = f.read()
+            data = data.split()
+            data = list(map(float, data))
+        for box_idx in range(box_num):
+            box=[data[1+box_idx*5],data[2+box_idx*5],data[3+box_idx*5],data[4+box_idx*5]]
+            GT_bboxes[box_idx, :, image_idx]= yolo2voc(box,height,width)
+
+
+    GT_dict={}
+    for i, key in enumerate(bbox_final_keys):
+        GT_dict[key] = GT_bboxes[i, :, :]
+
+    return GT_dict
+
+def CalculateIOU(bbox_final_dict, GT_dict):
+    accuracy_dict = {}
+    TP = 0
+    FP = 0
+    FN = 0
+    for bbox_final_key in bbox_final_dict:
+        img_num = GT_dict[bbox_final_key].shape[1]
+        iou_list = []
+        for img_idx in range(img_num):
+            # calculate accuracy only if there is ground truth
+            if np.all(GT_dict[bbox_final_key][:,img_idx])!=0:
+                bbox_dx = bbox_final_dict[bbox_final_key][2,img_idx] - bbox_final_dict[bbox_final_key][0,img_idx]
+                bbox_dy = bbox_final_dict[bbox_final_key][3,img_idx] - bbox_final_dict[bbox_final_key][1,img_idx]
+                bbox_area = (bbox_dx + 1)*(bbox_dy + 1)
+                GT_dx = GT_dict[bbox_final_key][2,img_idx] - GT_dict[bbox_final_key][0,img_idx]
+                GT_dy = GT_dict[bbox_final_key][3,img_idx] - GT_dict[bbox_final_key][1,img_idx]
+                GT_area = (GT_dx + 1)*(GT_dy + 1)
+
+                x_left = max(bbox_final_dict[bbox_final_key][0,img_idx], GT_dict[bbox_final_key][0,img_idx])
+                y_top = max(bbox_final_dict[bbox_final_key][1,img_idx], GT_dict[bbox_final_key][1,img_idx])
+                x_right = min(bbox_final_dict[bbox_final_key][2,img_idx], GT_dict[bbox_final_key][2,img_idx])
+                y_bottom = min(bbox_final_dict[bbox_final_key][3,img_idx], GT_dict[bbox_final_key][3,img_idx])
+
+                intersection_area = max(0,(x_right - x_left + 1)) * max(0,(y_bottom - y_top + 1))
+                iou = intersection_area / (bbox_area + GT_area - intersection_area)
+                iou_list.append(iou)
+                if iou>0.5:
+                    TP = TP + 1
+                else:
+                    FP = FP + 1
+                if GT_area != 0 and bbox_area == 0:
+                    FN = FN + 1
+        accuracy_dict[bbox_final_key] = np.mean(iou_list)
+
+    average_iou=np.mean(list(accuracy_dict.values()))
+
+    return accuracy_dict, average_iou,TP, FP, FN
+
+
+def runVideo(tracker_name, tracker_param, imagefile,ini_bbox, imglist, optional_box=None, debug=None, save_results=False):
+    """Run the tracker on your webcam.
+    args:
+        tracker_name: Name of tracking method.
+        tracker_param: Name of parameter file.
+        debug: Debug level.
+    """
+    tracker = Tracker(tracker_name, tracker_param)
+    bbox=tracker.runVideo(imagefilepath=imagefile, ini_bbox=ini_bbox, imglist=imglist,optional_box=optional_box, debug=debug)
+    return bbox
+
+def main():
+    parser = argparse.ArgumentParser(description='Run the tracker on your webcam.')
+    parser.add_argument('--tracker_name', type=str, default='tomp', help='Name of tracking method.')
+    parser.add_argument('--tracker_param', type=str, default='tomp50',help='Name of parameter file.')
+    parser.add_argument('--imagefile', type=str, default='/home/zhihao/pytracking/pytracking/imagesfolder/s6_t2_t6/rgb',help='path to a images file.')
+    parser.add_argument('--GTdir', default='/home/zhihao/pytracking/pytracking/imagesfolder/s6_t2_t6/obj_train_data', type=str,help='Groundtruth files')
+    parser.add_argument('--optional_box', type=float, default=None, nargs="+", help='optional_box with format x y w h.')
+    parser.add_argument('--debug', type=int, default=0, help='Debug level.')
+    parser.add_argument('--save_results', dest='save_results', action='store_true', help='Save bounding boxes')
+    parser.set_defaults(save_results=False)
+
+    args = parser.parse_args()
+    imglist = os.listdir(args.imagefile)
+    imglist.sort(key=lambda x: int(x[6:-4]))  # according to the image name choose sorted number
+
+    img_num = len(imglist)
+    first_rgb_frame = cv2.imread(os.path.join(args.imagefile, imglist[0]))
+    image_size = first_rgb_frame.shape[:2][::-1]
+    ini_bboxes=[]
+    while True:
+        cv2.putText(first_rgb_frame, 'Select target ROI and press ENTER', (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                    1, (255, 0, 0), 1)
+        cv2.putText(first_rgb_frame, 'press q to quit DrawROI', (10, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                    1, (255, 0, 0), 1)
+        x, y, w, h = cv2.selectROI('Initial box', first_rgb_frame, fromCenter=False)
+        ini_bboxes.append([x, y, w, h])
+        # colors.append((randint(0, 255), randint(0, 255), randint(0, 255)))
+        key = cv2.waitKey(0)
+        if key == ord("q"):
+            break
+    cv2.destroyAllWindows()
+    # ini_bboxes=[[215, 301, 26, 61], [279, 280, 90, 70], [401, 267, 31, 94]]
+    # # print(ini_bboxes)
+    box_num=len(ini_bboxes)
+    bbox_final_keys = InputLabel(box_num)
+    print(bbox_final_keys)
+
+    final_bboxes=np.zeros([box_num,4,img_num])
+    for box_idx in range(box_num):
+        final_bboxes[box_idx,:,:]=runVideo(args.tracker_name, args.tracker_param, args.imagefile,ini_bboxes[box_idx], imglist, optional_box=None, debug=None, save_results=False)
+    # print(final_bboxes)
+
+    # for img_idx in range(img_num):
+    #     im=cv2.imread(os.path.join(args.imagefile, imglist[img_idx]))
+    #     for box_idx in range(box_num):
+    #         bbox=[int(s) for s in final_bboxes[box_idx,img_idx,:]]
+    #         cv2.rectangle(im, (bbox[0], bbox[1]), (bbox[2] + bbox[0], bbox[3] + bbox[1]),(0, 255, 0), 2)
+    #     cv2.imshow('tracker result', im)
+    #     cv2.waitKey(20)
+    # cv2.destroyAllWindows()
+
+
+    bbox_final_dict={}
+    for i, key in enumerate(bbox_final_keys):
+        bbox_final_dict[key] = final_bboxes[i, :, :]
+
+    GT_dict = load_groundtruth(args.GTdir, image_size, box_num, bbox_final_keys)
+
+    if len(bbox_final_dict) == len(GT_dict):
+        accuracy_dict, average_iou, TP, FP, FN = CalculateIOU(bbox_final_dict, GT_dict)
+        print('TP: {}, FP: {}, FN:{}'.format(TP, FP, FN))
+        print('Precision: {}, Recall: {}'.format(TP / (TP + FP), TP / (TP + FN)))
+        print('accuracy: {}'.format(accuracy_dict))
+        print('average iou: {}'.format(average_iou))
+
+    else:
+        raise Exception('number of ground truth labels is not identical to number of drawn bounding boxes')
+
+    # print(bbox_final_dict)
+
+    # np.save('breakfast2.npy', bbox_final_dict)
+
+
+
+
+    # print(final_bboxes)
+
+    # run_video(args.tracker_name, args.tracker_param,args.imagefile, args.optional_box, args.debug, args.save_results)
+
+
+if __name__ == '__main__':
+    main()
