@@ -1,16 +1,17 @@
 import cv2
 
 # load video from your path
-vc = cv2.VideoCapture('s1_t5_t4_track.mp4')
+vc = cv2.VideoCapture('/home/zhihao/RAFT/TUM_dataset/reading_t2.mp4')   #导入视频地址
 c = 0
 rval = vc.isOpened()
 
 while rval:
-    c = c + 1
+
     rval, frame = vc.read()
     if rval:
-        cv2.imwrite('to_yuankai/flow_result/' + str(c) + '.jpg', frame)
+        cv2.imwrite('/home/zhihao/RAFT/TUM_dataset/reading_t2/rgb/' + str(c) + '.png', frame)  #保存图片到指定目录，编号
     else:
         break
+    c = c + 1
 
 vc.release()
