@@ -232,6 +232,7 @@ class Tracker:
 
         return output
 
+    # ************************************************************For multi objects tracking******************************************
     def runVideo(self, imagefilepath, ini_bbox, imglist, optional_box=None, debug=None, visdom_info=None):
         """Run the tracker with the video file.
         args:
@@ -339,6 +340,100 @@ class Tracker:
         #     y2=box[1]+box[3]
         #     tracker[obj_idx,:,0]=np.array([x1, y1, x2, y2])
         return tracked_bb
+
+    # ************************************************************For signal object tracking******************************************
+
+    # def runVideo(self, imagefilepath, ini_bbox, imglist, optional_box=None, debug=None, visdom_info=None):
+    #     """Run the tracker with the video file.
+    #     args:
+    #         debug: Debug level.
+    #     """
+    #     # obj_num=len(ini_bbox)
+    #
+    #     params = self.get_parameters()
+    #
+    #     debug_ = debug
+    #     if debug is None:
+    #         debug_ = getattr(params, 'debug', 0)
+    #     params.debug = debug_
+    #
+    #     params.tracker_name = self.name
+    #     params.param_name = self.parameter_name
+    #     self._init_visdom(visdom_info, debug_)
+    #
+    #     multiobj_mode = getattr(params, 'multiobj_mode', getattr(self.tracker_class, 'multiobj_mode', 'default'))
+    #
+    #     if multiobj_mode == 'default':
+    #         tracker = self.create_tracker(params)
+    #         if hasattr(tracker, 'initialize_features'):
+    #             tracker.initialize_features()
+    #
+    #     elif multiobj_mode == 'parallel':
+    #         tracker = MultiObjectWrapper(self.tracker_class, params, self.visdom, fast_load=True)
+    #     else:
+    #         raise ValueError('Unknown multi object mode {}'.format(multiobj_mode))
+    #
+    #     colors = {0: [0, 0, 255], 1: [0, 255, 0], 2: [0, 255, 255], 3: [255, 0, 0], 4: [139, 72, 61],
+    #                    5: [209, 206, 0], 6: [224, 255, 255]}
+    #
+    #     def _build_init_info(box):
+    #         return {'init_bbox': OrderedDict({1: box}), 'init_object_ids': [1, ], 'object_ids': [1, ],
+    #                 'sequence_object_ids': [1, ]}
+    #
+    #
+    #     img_num = len(imglist)
+    #     tracked_bb = np.zeros([4, img_num])
+    #
+    #     x1 = ini_bbox[0]
+    #     y1 = ini_bbox[1]
+    #     x2 = ini_bbox[0] + ini_bbox[2]
+    #     y2 = ini_bbox[1] + ini_bbox[3]
+    #     tracked_bb[:, 0] = np.array([x1, y1, x2, y2])
+    #     output_boxes = []
+    #     # output_boxes.append(ini_bbox)
+    #     frame = cv.imread(os.path.join(imagefilepath, imglist[0]))
+    #     tracker.initialize(frame, _build_init_info(ini_bbox))
+    #     if optional_box is not None:
+    #         assert isinstance(optional_box, (list, tuple))
+    #         assert len(optional_box) == 4, "valid box's foramt is [x,y,w,h]"
+    #         tracker.initialize(frame, _build_init_info(optional_box))
+    #         output_boxes.append(optional_box)
+    #
+    #
+    #     for img_idx in range(1,img_num):
+    #         # Draw box
+    #         frame = cv.imread(os.path.join(imagefilepath, imglist[img_idx]))
+    #         frame_disp = frame.copy()
+    #         out = tracker.track(frame)
+    #         # for obj_idx in range(obj_num):
+    #         state = [int(s) for s in out['target_bbox'][1]]
+    #         x1 = state[0]
+    #         y1 = state[1]
+    #         x2 = state[0] + state[2]
+    #         y2 = state[1] + state[3]
+    #         tracked_bb[:, img_idx] = np.array([x1, y1, x2, y2])
+    #         output_boxes.append(state)
+    #
+    #         cv.rectangle(frame_disp, (state[0], state[1]), (state[2] + state[0], state[3] + state[1]),
+    #                      [0,255,0], 2)
+    #
+    #         font_color = (0, 0, 0)
+    #         cv.putText(frame_disp, 'Tracking!', (20, 30), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+    #                    font_color, 1)
+    #         # cv.putText(frame_disp, 'Press r to reset', (20, 55), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+    #         #            font_color, 1)
+    #         cv.putText(frame_disp, 'Press q to quit', (20, 55), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+    #                    font_color, 1)
+    #
+    #         # Display the resulting frame
+    #         cv.imshow('tracker', frame_disp)
+    #         key = cv.waitKey(1)
+    #         if key == ord('q'):
+    #             break
+    #
+    #     cv.destroyAllWindows()
+    #
+    #     return tracked_bb
 
 
 
