@@ -41,7 +41,7 @@ def is_fix():
     root = tkinter.Tk(className='Specify labels')
     root.geometry('600x120')
 
-    show_text = tkinter.Label(root, text="Do you want to fix some objects")
+    show_text = tkinter.Label(root, text="Do you want to fix some objects, input 'yes' or 'no")
     show_text.pack(pady=20)
 
     var_input = tkinter.StringVar()
@@ -115,7 +115,7 @@ def Inputmethod(obj_name):
     root = tkinter.Tk(className='Specify labels')
     root.geometry('600x120')
 
-    show_text = tkinter.Label(root, text="input method to fix " + obj_name +"'s trajectory")
+    show_text = tkinter.Label(root, text="input method to fix " + obj_name +"'s trajectory, input 'of' or 'occlusion'")
     show_text.pack(pady=20)
 
     var_input = tkinter.StringVar()
@@ -432,7 +432,7 @@ def end_contactframe(end_bboxes,boxes_num,imglist,edgebboxes,handsbboxes):
             candidate_boxes = []
             # iou filter
             for box in edge_boxes:
-                if iou(box, end_bboxes[box_idx]) > 0.5:
+                if iou(box, end_bboxes[box_idx]) > 0.7:
                     candidate_boxes.append([box, iou(box, end_bboxes[box_idx])])
             candidate_boxes.sort(key=lambda x: x[1], reverse=True)
 
@@ -491,137 +491,7 @@ def end_contactframe(end_bboxes,boxes_num,imglist,edgebboxes,handsbboxes):
                 break
     return end_contact
 
-# def start_contactframe(ini_bboxes,boxes_num,imglist,edgebboxes,handsbboxes):
-#     image_num=len(imglist)
-#     start_frames = [[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         for image_idx in range(image_num-1):
-#             edge_boxes=edgebboxes[image_idx,:,:]
-#             hands_boxes=handsbboxes[image_idx,:,:]
-#             candidate_boxes = []
-#             # iou filter
-#             for box in edge_boxes:
-#                 if iou(box, ini_bboxes[box_idx]) > 0.5:
-#                     candidate_boxes.append([box, iou(box, ini_bboxes[box_idx])])
-#             candidate_boxes.sort(key=lambda x: x[1], reverse=True)
-#
-#             if candidate_boxes:
-#                 # hand_preBox_dist=np.zeros([2,1])
-#                 pre_box = candidate_boxes[0][0]
-#                 pre_box_center = CalculateBoxCenter(pre_box)
-#
-#                 # for hand_idx in range(2):
-#                 #     hand_center=CalculateBoxCenter(hands_boxes[hand_idx])
-#                 #     if iou(hands_boxes[hand_idx],pre_box)>0 or np.linalg.norm(pre_box_center-hand_center)<40:
-#                 start_frames[box_idx].append(image_idx)
-#
-#     start_tuple=[[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         start_tuple[box_idx]=startframes_tuple(start_frames,box_idx)
-#
-#     ini_contact=[[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         for tuple_idx in range(len(start_tuple[box_idx])):
-#             if len(start_tuple[box_idx][tuple_idx])>=3:
-#                 ini_contact[box_idx].append(start_tuple[box_idx][tuple_idx][0])
-#             else:
-#                 for i in range(len(start_tuple[box_idx][tuple_idx])):
-#                     frame_interval=[start_tuple[box_idx][tuple_idx][i],start_tuple[box_idx][tuple_idx][i] + 5]
-#                     referencebox=ini_bboxes[box_idx]
-#
-#                     handscenter=hand_move_trajectory(handsbboxes,frame_interval)
-#                     obj_center=obj_move_trajectory(referencebox,frame_interval,imglist)
-#
-#                     obj_movingvector = np.diff(obj_center, axis=0)
-#                     average_objmovingvector = np.mean(obj_movingvector, axis=0)
-#                     average_handmovingvector = np.zeros([2, 2])
-#                     for hand_idx in range(2):
-#                         hand_moingvector = np.diff(handscenter[:, hand_idx, :], axis=0)
-#                         average_handmovingvector[hand_idx, :] = np.mean(hand_moingvector, axis=0)
-#
-#                     for hand_idx in range(2):
-#                         v1 = average_objmovingvector
-#                         v2 = average_handmovingvector[hand_idx]
-#                         if np.linalg.norm(v1)<1:
-#                             continue
-#                         if not(np.any(v2)):
-#                             continue
-#                         else:
-#                             cos_sim = v1.dot(v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-#                             if cos_sim>0.8:
-#                                 ini_contact[box_idx].append(frame_interval[0])
-#                                 break
-#
-#                     if len(ini_contact[box_idx])==1:
-#                         break
-#             if len(ini_contact[box_idx]) == 1:
-#                 break
-#     return ini_contact
-#
-# def end_contactframe(end_bboxes,boxes_num,imglist,edgebboxes,handsbboxes):
-#     image_num=len(imglist)
-#     end_frames = [[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         for image_idx in range(image_num-2,-1,-1):
-#             edge_boxes=edgebboxes[image_idx,:,:]
-#             hands_boxes=handsbboxes[image_idx,:,:]
-#             candidate_boxes = []
-#             # iou filter
-#             for box in edge_boxes:
-#                 if iou(box, end_bboxes[box_idx]) > 0.5:
-#                     candidate_boxes.append([box, iou(box, end_bboxes[box_idx])])
-#             candidate_boxes.sort(key=lambda x: x[1], reverse=True)
-#
-#             if candidate_boxes:
-#                 # hand_preBox_dist=np.zeros([2,1])
-#                 pre_box = candidate_boxes[0][0]
-#                 pre_box_center = CalculateBoxCenter(pre_box)
-#                 # for hand_idx in range(2):
-#                 #     hand_center = CalculateBoxCenter(hands_boxes[hand_idx])
-#                 #     if iou(hands_boxes[hand_idx], pre_box) > 0 or np.linalg.norm(pre_box_center - hand_center) < 50:
-#                 end_frames[box_idx].append(image_idx)
-#     end_tuple=[[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         end_tuple[box_idx]=endframes_tuple(end_frames,box_idx)
-#
-#     end_contact = [[] for _ in range(boxes_num)]
-#     for box_idx in range(boxes_num):
-#         for tuple_idx in range(len(end_tuple[box_idx])):
-#             if len(end_tuple[box_idx][tuple_idx])>=3:
-#                 end_contact[box_idx].append(end_tuple[box_idx][tuple_idx][0])
-#             else:
-#                 for i in range(len(end_tuple[box_idx][tuple_idx])):
-#                     frame_interval = [end_tuple[box_idx][tuple_idx][i], end_tuple[box_idx][tuple_idx][i] - 10]
-#                     referencebox = end_bboxes[box_idx]
-#
-#                     handscenter = hand_move_trajectory(handsbboxes, frame_interval)
-#                     obj_center = obj_move_trajectory(referencebox, frame_interval,imglist)
-#
-#                     obj_movingvector = np.diff(obj_center, axis=0)
-#                     average_objmovingvector = np.mean(obj_movingvector, axis=0)
-#                     average_handmovingvector = np.zeros([2, 2])
-#                     for hand_idx in range(2):
-#                         hand_moingvector = np.diff(handscenter[:, hand_idx, :], axis=0)
-#                         average_handmovingvector[hand_idx, :] = np.mean(hand_moingvector, axis=0)
-#
-#                     for hand_idx in range(2):
-#                         v1 = average_objmovingvector
-#                         v2 = average_handmovingvector[hand_idx]
-#                         if np.linalg.norm(v1) < 1:
-#                             break
-#                         if not (np.any(v2)):
-#                             continue
-#                         else:
-#                             cos_sim = v1.dot(v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-#                             if cos_sim > 0.8:
-#                                 end_contact[box_idx].append(frame_interval[0])
-#                                 break
-#
-#                     if len(end_contact[box_idx]) == 1:
-#                         break
-#             if len(end_contact[box_idx]) == 1:
-#                 break
-#     return end_contact
+
 
 def of_siamtracker(ini_box,tracker_interval,flowlist):
     track_start=tracker_interval[0]
@@ -844,12 +714,13 @@ def tomp(tracker_name, tracker_param, tracker_interval,imagefile,ini_bbox, imgli
 
 
 if __name__ == '__main__':
-    scene_folder = "makeup_t1"
+    scene_folder = "coffee_t3"
 
     current_path = os.getcwd()
     scene_path = os.path.join(current_path, scene_folder)
     rgb_folder = os.path.join(current_path, scene_folder, "rgb")
     flow_folder= os.path.join(current_path,scene_folder ,"flow")
+    results_folder= os.path.join(current_path,scene_folder ,"results_test")
     record_file = scene_folder + ".npz"
     edgebboxes_file = os.path.join(current_path,scene_folder , "edgebboxes.npz")
     # handsbboxes_file= os.path.join(current_path,scene_folder , "handsbboxes.npz")
@@ -865,6 +736,8 @@ if __name__ == '__main__':
                         default='/home/zhihao/pysot-master/experiments/siamrpn_r50_l234_dwxcorr/model.pth')
     parser.add_argument('--imagefile', type=str, default=rgb_folder,
                         help='path to a images file.')
+    parser.add_argument('--resultsfile', type=str, default=results_folder,
+                        help='path to annotation results file.')
     parser.add_argument('--flowFolder', default=flow_folder, type=str,
                         help='Raft flow files')
     parser.add_argument('--edgebboxes', default=edgebboxes_file,
@@ -873,8 +746,8 @@ if __name__ == '__main__':
     # parser.add_argument('--handsbboxes', default=handsbboxes_file,
     #                     type=str,
     #                     help='Raft flow files')
-    # parser.add_argument('--GTdir', default=GT_dir,
-    #                     type=str, help='Groundtruth files')
+    parser.add_argument('--GTdir', default=GT_dir,
+                        type=str, help='Groundtruth files')
     parser.add_argument('--optional_box', type=float, default=None, nargs="+", help='optional_box with format x y w h.')
     parser.add_argument('--debug', type=int, default=0, help='Debug level.')
     parser.add_argument('--save_results', dest='save_results', action='store_true', help='Save bounding boxes')
@@ -883,6 +756,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
     colors = {0: [0, 0, 255], 1: [0, 255, 0], 2: [0, 255, 255], 3: [255, 0, 0], 4: [139, 72, 61],
               5: [209, 206, 0], 6: [224, 255, 255]}
+
+    TUM_dict = {'bowl': '0', 'spoon': '1', 'cereal': '2', 'milk': '3', 'cup': '4', 'knife': '5', 'cuttingboard': '6',
+                'bread': '7', 'kettle': '8', 'teabag': '9', 'towel': '10',
+                'flower': '11', 'plant': '12', 'shears': '13', 'apple': '14', 'banana': '15', 'peeler': '16',
+                'plate': '17', 'lipstick': '18', 'comb': '19', 'mirror': '20', 'perfume': '21',
+                'newspaper': '22', 'phone': '23', 'glass': '24', 'book': '25', 'pen': '26', 'toothbrush': '27',
+                'toothpaste': '28', 'razor': '29', 'computer': '30',
+                'coffee': '31', 'sugar': '32', 'honey': '33'}
+
+    KIT_dict = {'whisk': '0', 'bowl1': '1', 'bowl2': '2', 'knife': '3', 'cuttingboard': '4', 'bottle1': '5',
+                'bottle2': '6', 'banana': '7', 'cup': '8', 'cereal': '9', 'sponge': '10',
+                'screwdriver': '11', 'hammer': '12', 'wood': '13', 'saw': '14', 'harddriver': '15'}
+
     imglist = os.listdir(args.imagefile)
     imglist.sort(key=lambda x: int(x[0:-4]))  # according to the image name choose sorted number
 
@@ -899,6 +785,9 @@ if __name__ == '__main__':
     first_rgb_frame = cv2.imread(os.path.join(args.imagefile, imglist[0]))
     end_rgb_frame = cv2.imread(os.path.join(args.imagefile, imglist[-1]))
     image_size = first_rgb_frame.shape[:2][::-1]
+    width = image_size[0]
+    height = image_size[1]
+
     ini_bboxes = []
     while True:
         cv2.putText(first_rgb_frame, 'Select target ROI and press ENTER', (10, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL,
@@ -919,13 +808,17 @@ if __name__ == '__main__':
     bbox_final_keys = InputLabel(box_num)
     print(bbox_final_keys)
 
-    final_bboxes = np.zeros([box_num, 4, img_num])
+    mask_colors = {0: [0, 0, 255], 1: [0, 255, 0], 2: [0, 255, 255], 3: [255, 0, 0], 4: [139, 72, 61], 5: [209, 206, 0],
+                   6: [224, 255, 255]}
+    # **********************************************************single object************************************************************
+    # final_bboxes = np.zeros([box_num, 4, img_num])
     # for box_idx in range(box_num):
     #     final_bboxes[box_idx, :, :] = runVideo(args.tracker_name, args.tracker_param, args.imagefile,
     #                                            ini_bboxes[box_idx], imglist, optional_box=None, debug=None,
     #                                            save_results=False)
-    # print(final_bboxes)
 
+    # **********************************************************multi objects************************************************************
+    final_bboxes=np.zeros([box_num,4,img_num])
     for box_idx in range(box_num):
         box = ini_bboxes[box_idx]
         x1=box[0]
@@ -935,22 +828,17 @@ if __name__ == '__main__':
         final_bboxes[box_idx,:,0]=np.array([x1, y1, x2, y2])
     bbox=runVideo(args.tracker_name, args.tracker_param, args.imagefile,ini_bboxes, imglist, optional_box=None, debug=None, save_results=False)
     final_bboxes[:,:,1:]=bbox[:,:,1:]
+    # print(final_bboxes)
 
-    # for img_idx in range(img_num):
-    #     im=cv2.imread(os.path.join(args.imagefile, imglist[img_idx]))
-    #     for box_idx in range(box_num):
-    #         bbox=[int(s) for s in final_bboxes[box_idx,:,img_idx]]
-    #         cv2.rectangle(im, (bbox[0], bbox[1]), (bbox[2] , bbox[3]),(0, 255, 0), 2)
-    #     cv2.imshow('tracker result', im)
-    #     cv2.waitKey(10)
-    # cv2.destroyAllWindows()
 
-    # bbox_final_dict = np.load('/home/zhihao/pytracking/pytracking/demo_test.npy', allow_pickle=True).item()
+
+    # bbox_final_dict = np.load('/home/zhihao/pytracking/pytracking/coffee_t3tomp.npy', allow_pickle=True).item()
     bbox_final_dict = {}
     for i, key in enumerate(bbox_final_keys):
         bbox_final_dict[key] = final_bboxes[i, :, :]
 
-    # colors = {'bowl': [0, 255, 255], 'cereal': [0, 0, 255], 'milk': [0, 255, 0], 'cup': [255, 0, 0]}
+    # colors = {'coffee': [0, 255, 255], 'cup': [0, 0, 255], 'milk': [0, 255, 0], 'kettle': [255, 0, 0], 'sugar':[209, 206, 0]}
+
     # for image_idx in range(img_num):
     #     im=cv2.imread(os.path.join(args.imagefile, imglist[image_idx]))
     #     for key in bbox_final_keys:
@@ -958,7 +846,7 @@ if __name__ == '__main__':
     #         cv2.rectangle(im, (x1, y1), (x2, y2), colors[key], 2, cv2.LINE_AA)
     #         cv2.putText(im, key, (x1, y1 - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, colors[key], 1)
     #     cv2.imshow('tomp tracker ', im)
-    #     cv2.waitKey(50)
+    #     cv2.waitKey(5)
     # cv2.destroyAllWindows()
 
     signal=is_fix()
@@ -1008,8 +896,8 @@ if __name__ == '__main__':
                                                                                                    last_bboxes[box_idx], imglist)
 
         for i, key in enumerate(fix_bbox_keys):
-            # bbox_final_dict[key][:,contact_stage[i][0]:contact_stage[i][1]] = fix_bboxes[i, :, contact_stage[i][0]:contact_stage[i][1]]
-            bbox_final_dict[key][:, :] = fix_bboxes[i, :, :]
+            bbox_final_dict[key][:,contact_stage[i][0]:] = fix_bboxes[i, :, contact_stage[i][0]:]
+            # bbox_final_dict[key][:, :] = fix_bboxes[i, :, :]
 
         # for image_idx in range(img_num):
         #     im = cv2.imread(os.path.join(args.imagefile, imglist[image_idx]))
@@ -1018,8 +906,10 @@ if __name__ == '__main__':
         #         cv2.rectangle(im, (x1, y1), (x2, y2), colors[key], 2, cv2.LINE_AA)
         #         cv2.putText(im, key, (x1, y1 - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, colors[key], 1)
         #     cv2.imshow('final result ', im)
-        #     cv2.waitKey(30)
+        #     cv2.waitKey(10)
         # cv2.destroyAllWindows()
+
+        # np.save(scene_folder + '_tomp_improve.npy', bbox_final_dict)
 
         GT_dict = load_groundtruth(args.GTdir, image_size, box_num, bbox_final_keys)
 
@@ -1033,6 +923,20 @@ if __name__ == '__main__':
         else:
             raise Exception('number of ground truth labels is not identical to number of drawn bounding boxes')
 
+    for img_idx in range(img_num):
+        file_path = os.path.join(args.resultsfile, 'frame_'+str(img_idx).zfill(6) + '.txt')
+        txt_file = open(file_path, 'w')
+        for key in bbox_final_keys:
+            # x1, y1, x2, y2 = map(str, bbox_final_dict[key][:, img_idx])
+            x1, y1, x2, y2 = bbox_final_dict[key][:, img_idx]
+            x=x1/width
+            y=y1/height
+            w=(x2-x1)/width
+            h=(y2-y1)/height
+            content = TUM_dict[key] + ' ' + str(x) + ' ' + str(y) + ' ' + str(w) + ' ' + str(h)
+            txt_file.writelines(content)
+            txt_file.write('\n')
+        txt_file.close()
 
 
 
